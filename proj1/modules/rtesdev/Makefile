@@ -1,5 +1,5 @@
 obj-m += rtesdev.o  
 all:
-	 make -C ../../.. M=$(pwd) modules
+	 make -C ../../.. M=$(shell pwd) modules
 clean:
-	 make -C ../../.. M=$(pwd) clean
+	 make -C ../../.. M=$(shell pwd) clean

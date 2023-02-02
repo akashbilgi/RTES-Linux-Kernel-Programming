@@ -6,50 +6,36 @@
 /*
 ** This function will be called when we open the Misc device file
 */
-static int etx_misc_open(struct inode *inode, struct file *file)
-{
-    pr_info("EtX misc device open\n");
-    return 0;
-}
-/*
-** This function will be called when we close the Misc Device file
-*/
-static int etx_misc_close(struct inode *inodep, struct file *filp)
-{
-    pr_info("EtX misc device close\n");
-    return 0;
-}
-/*
-** This function will be called when we write the Misc Device file
-*/
-static ssize_t etx_misc_write(struct file *file, const char __user *buf,
-               size_t len, loff_t *ppos)
-{
-    pr_info("EtX misc device write\n");
-    
-    /* We are not doing anything with this data now */
-    
-    return len; 
-}
- 
+
 /*
 ** This function will be called when we read the Misc Device file
 */
 static ssize_t etx_misc_read(struct file *filp, char __user *buf,
                     size_t count, loff_t *f_pos)
 {
+    char task_info[256];
+    struct task_struct *task;
+    ssize_t len = 0;
+
+    for_each_process(task)
+    {
+        if (task->prio > 0)
+        {
+            len += snprintf(task_info + len, sizeof(task_info) - len,
+                            "Task ID (pid): %d, Process ID (tgid): %d, Real-time priority: %d, Command name: %s\n",
+                            task->pid, task->tgid, task->prio, task->comm);
+        }
+    }
     pr_info("EtX misc device read\n");
  
-    return 0;
+    return simple_read_from_buffer(buf, count,f_pos, task_info, len);
 }
 //File operation structure 
 static const struct file_operations fops = {
     .owner          = THIS_MODULE,
-    .write          = etx_misc_write,
+    
     .read           = etx_misc_read,
-    .open           = etx_misc_open,
-    .release        = etx_misc_close,
-    .llseek         = no_llseek,
+
 };
 //Misc device structure
 struct miscdevice etx_misc_device = {
