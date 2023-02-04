@@ -53,7 +53,7 @@ static int __init mod_count_tasks_init(void)
 
 static void __exit mod_count_tasks_exit(void)
 {
-    set_writable();
+    //set_writable();
     sys_call_table[449] = (unsigned long *)orig_count_rt_tasks;
     //set_readonly();
 }
