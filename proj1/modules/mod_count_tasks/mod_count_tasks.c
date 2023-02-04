@@ -1,43 +1,45 @@
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/sched.h>
 #include <linux/syscalls.h>
-#include <linux/compiler.h>
-#include <linux/unistd.h>
+#include <asm/syscall.h>
 
-#define __NR_count_rt_tasks_mod 449
 
-unsigned long *sys_call_table;
-EXPORT_SYMBOL(sys_call_table);
 
-asmlinkage long count_rt_tasks_mod(int *result)
-{
-    int count = 0;
-    struct task_struct *task;
-    for_each_process(task) {
-        if (task->rt_priority > 50)
-            count++;
-    }
-    *result = count;
-    return 0;
+extern sys_call_ptr_t sys_call_table[];
+
+asmlinkage long (*count_tasks)(int*);
+
+SYSCALL_DEFINE1(mod_count_tasks, int*, result){
+	int counter=0;
+	struct task_struct *task, *thread;
+	
+	printk("oveerided count task (449) syscall");
+	for_each_process_thread(task, thread){
+		if(task->rt_priority>50)
+		counter++;
+	}
+
+	int ret = copy_to_user(result, &counter, sizeof(counter));
+	
+	if(ret){
+		printk("error while copying data");
+		return -1;
+	}
+	printk("succesfully copied data");
+	return 0;
 }
 
-asmlinkage long (*orig_count_rt_tasks)(int *result);
-
-static int __init mod_count_tasks_init(void)
-{
-    orig_count_rt_tasks = (void *)sys_call_table[__NR_count_rt_tasks_mod];
-    sys_call_table[__NR_count_rt_tasks_mod] = (unsigned long)count_rt_tasks_mod;
-    return 0;
+int init_mod(void){
+	//__NR_count_task == 449
+	count_tasks = (void*)sys_call_table[__NR_count_tasks];
+	
+	sys_call_table[__NR_count_tasks] = (void*) __x64_sys_mod_count_tasks;
+	return 0;
 }
-
-static void __exit mod_count_tasks_exit(void)
-{
-    sys_call_table[__NR_count_rt_tasks_mod] = (unsigned long)orig_count_rt_tasks;
+void exit_module(void){
+	sys_call_table[__NR_count_tasks] = (void*)count_tasks;
+	
 }
 MODULE_LICENSE("GPL");
-module_init(mod_count_tasks_init);
-module_exit(mod_count_tasks_exit);
+module_init(init_mod);
+module_exit(exit_module);

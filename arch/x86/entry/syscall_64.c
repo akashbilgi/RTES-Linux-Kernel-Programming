@@ -12,7 +12,9 @@
 #undef __SYSCALL
 
 #define __SYSCALL(nr, sym) __x64_##sym,
+//asmlinkage sys_call_ptr_t sys_call_table[];
 
 asmlinkage sys_call_ptr_t sys_call_table[] = {
 #include <asm/syscalls_64.h>
 };
+EXPORT_SYMBOL(sys_call_table);
