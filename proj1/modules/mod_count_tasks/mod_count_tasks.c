@@ -5,7 +5,9 @@
 #include <linux/slab.h>
 #include <asm/pgtable.h>
 
-unsigned long **sys_call_table = (unsigned long **)0xffffffff810a0e00;
+//unsigned long **sys_call_table = (unsigned long **)0xffffffff810a0e00;
+unsigned long *sys_call_table;
+EXPORT_SYMBOL(sys_call_table);
 
 asmlinkage long count_rt_tasks_mod(int *result)
 {
@@ -42,7 +44,7 @@ static void set_readonly(void)
 static int __init mod_count_tasks_init(void)
 {
     //sys_call_table = (unsigned long **)0xffffffff81801400;;
-    set_writable();
+    //set_writable();
     orig_count_rt_tasks = (void *)sys_call_table[449];
     sys_call_table[449] = (unsigned long *)count_rt_tasks_mod;
     //set_readonly();

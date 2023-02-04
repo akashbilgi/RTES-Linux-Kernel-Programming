@@ -17,7 +17,7 @@
 #include <asm/unistd.h>
 
 typedef long (*sys_call_ptr_t)(const struct pt_regs *);
-extern const sys_call_ptr_t sys_call_table[];
+extern sys_call_ptr_t sys_call_table[];
 
 #if defined(CONFIG_X86_32)
 #define ia32_sys_call_table sys_call_table
