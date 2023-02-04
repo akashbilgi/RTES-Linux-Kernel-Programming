@@ -1,13 +1,38 @@
+#include <linux/miscdevice.h>
+#include <linux/fs.h>
+#include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/syscalls.h>
-#include <linux/slab.h>
-#include <asm/pgtable.h>
+#include <linux/compiler.h>
+#include <linux/unistd.h>
 
-//unsigned long **sys_call_table = (unsigned long **)0xffffffff810a0e00;
-unsigned long *sys_call_table;
-EXPORT_SYMBOL(sys_call_table);
+#define __NR_count_rt_tasks_mod 449
+
+//extern void * sys_call_table[];
+//EXPORT_SYMBOL(sys_call_table);
+unsigned long **sys_call_table;
+
+static unsigned long **find_sys_call_table(void) {
+    unsigned long **sctable;
+    unsigned long ptr;
+
+    sctable = NULL;
+    for ((unsigned long)sys_call_table;
+         ptr < 0xfffffffffffff000UL; ptr += sizeof(void *)) {
+        unsigned long *p;
+
+        p = (unsigned long *)ptr;
+        if (p[__NR_close] == (unsigned long)sys_call_table[__NR_close]) {
+            sctable = (unsigned long **)p;
+            return sctable;
+        }
+    }
+
+    return NULL;
+}
+
 
 asmlinkage long count_rt_tasks_mod(int *result)
 {
@@ -23,39 +48,23 @@ asmlinkage long count_rt_tasks_mod(int *result)
 
 asmlinkage long (*orig_count_rt_tasks)(int *result);
 
-static void set_writable(void)
-{
-    unsigned long cr0;
-
-    cr0 = read_cr0();
-    clear_bit(16, &cr0);
-    write_cr0(cr0);
-}
-
-static void set_readonly(void)
-{
-    unsigned long cr0;
-
-    cr0 = read_cr0();
-    set_bit(16, &cr0);
-    write_cr0(cr0);
-}
-
 static int __init mod_count_tasks_init(void)
 {
-    //sys_call_table = (unsigned long **)0xffffffff81801400;;
-    //set_writable();
-    orig_count_rt_tasks = (void *)sys_call_table[449];
-    sys_call_table[449] = (unsigned long *)count_rt_tasks_mod;
-    //set_readonly();
+
+    if (!(sys_call_table = find_sys_call_table()))
+        return -1;
+    write_cr0(read_cr0() & (~0x10000));
+    orig_count_rt_tasks = (void *)sys_call_table[__NR_count_rt_tasks_mod];
+    sys_call_table[__NR_count_rt_tasks_mod] = (unsigned long)count_rt_tasks_mod;
+    write_cr0(read_cr0() | 0x10000);
     return 0;
 }
 
 static void __exit mod_count_tasks_exit(void)
 {
-    //set_writable();
-    sys_call_table[449] = (unsigned long *)orig_count_rt_tasks;
-    //set_readonly();
+    write_cr0(read_cr0() & (~0x10000));
+    sys_call_table[__NR_count_rt_tasks_mod] = (unsigned long)orig_count_rt_tasks;
+    write_cr0(read_cr0() | 0x10000);
 }
 MODULE_LICENSE("GPL");
 module_init(mod_count_tasks_init);
