@@ -1,16 +1,18 @@
-#include <linux/module.h>	/* Needed by all modules */
-#include <linux/kernel.h>	/* Needed for KERN_INFO */
+#include <linux/module.h> 
+#include <linux/kernel.h> 
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
-MODULE_VERSION("1");
+MODULE_AUTHOR("team13"); 
 
-int init_module(void)
-{
-	printk(KERN_INFO "Hello world! team13 in kernel space[update]\n");
-	return 0;
-}
+static int __init hello_init(void) { 
+    printk(KERN_INFO "Hello world! team13 in kernel space\n");  
+    return 0;
+} 
 
-void cleanup_module(void)
-{
-	printk(KERN_INFO "\n");
-}
+static void __exit hello_exit(void){ 
+    printk(KERN_INFO "Goodbye world!\n"); 
+} 
+module_init(hello_init);
+module_exit(hello_exit);
+

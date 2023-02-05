@@ -1,3 +1,5 @@
+core-y += kernel/ certs/ mm/ fs/ ipc/ security/ crypto/ block/ proj1/kernel/ 
+
 # SPDX-License-Identifier: GPL-2.0
 VERSION = 5
 PATCHLEVEL = 15
