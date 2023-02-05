@@ -1,5 +1,4 @@
-CC=gcc 
- 
-all: 
-	 $(CC) -o hello usrhello.c
+CC=gcc
+all:	
+	$(CC) -o  usrhello usrhello.c
 

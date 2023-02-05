@@ -1,5 +1,5 @@
-#include <stdio.h>
-
-void main(int argc, char* argv[]) {
-	    printf("Hello world! team13 in user space\n");
+#include<stdio.h>
+int main(){
+	printf("Hello World! team 13 in user space");
+	return 0;
 }
